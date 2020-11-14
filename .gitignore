@@ -1,0 +1,15 @@
+.gradle
+.idea
+build
+generated
+out
+dump.rdb
+classes/
+.DS_Store
+*.log
+*.iml
+.vscode/
+.project
+.settings/
+bin/
+local.properties
