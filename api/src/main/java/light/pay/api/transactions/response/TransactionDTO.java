@@ -30,4 +30,6 @@ public class TransactionDTO {
 
     @SerializedName("transaction_type")
     private int transactionType;
+
+    private int status;
 }

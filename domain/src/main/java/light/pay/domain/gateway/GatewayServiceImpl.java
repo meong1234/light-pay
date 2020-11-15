@@ -2,6 +2,7 @@ package light.pay.domain.gateway;
 
 import light.pay.api.accounts.AccountService;
 import light.pay.api.accounts.request.CreateAccountRequest;
+import light.pay.api.accounts.response.AccountDTO;
 import light.pay.api.errors.Response;
 import light.pay.api.gateway.GatewayService;
 import light.pay.api.gateway.request.PayRequest;
@@ -13,8 +14,12 @@ import light.pay.api.gateway.response.RegisterCustomerResponse;
 import light.pay.api.gateway.response.RegisterMerchantResponse;
 import light.pay.api.gateway.response.TopupResponse;
 import light.pay.api.transactions.TransactionService;
+import light.pay.api.transactions.request.InitiateTransactionRequest;
+import light.pay.api.transactions.response.TransactionDTO;
 import light.pay.api.wallets.WalletService;
 import light.pay.api.wallets.request.CreateWalletRequest;
+import light.pay.api.wallets.request.TopupWalletRequest;
+import light.pay.api.wallets.response.WalletDTO;
 import light.pay.domain.constants.DomainConstants;
 
 import java.util.UUID;
@@ -54,7 +59,51 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<TopupResponse> topup(TopupRequest request) {
-        return null;
+
+        Response<AccountDTO> findAccountResponse = accountService.findAccount(request.getUserID());
+        if (!findAccountResponse.isSuccess()) {
+            return (Response) findAccountResponse;
+        }
+        AccountDTO account = findAccountResponse.getData();
+
+        Response<WalletDTO> walletByUserId = walletService.findWalletByUserId(account.getUserID());
+        if (!walletByUserId.isSuccess()) {
+            return (Response) walletByUserId;
+        }
+
+        String walletId = walletByUserId.getData().getWalletId();
+        String transactionsId = UUID.randomUUID().toString();
+
+        InitiateTransactionRequest initiateTransactionRequest = InitiateTransactionRequest.builder()
+                .transactionID(transactionsId)
+                .amount(request.getAmount())
+                .creditedWallet(walletId)
+                .debitedWallet("") //this should be bank wallet
+                .description(request.getDescription())
+                .referenceID(request.getReferenceID())
+                .transactionType(DomainConstants.TransactionType.TOPUP_TYPE)
+                .build();
+
+        Response<TransactionDTO> initiateTrxResponse = transactionService.initiateTransaction(initiateTransactionRequest);
+        if (!initiateTrxResponse.isSuccess()) {
+            return (Response) initiateTrxResponse;
+        }
+        TransactionDTO initiatedTrx = initiateTrxResponse.getData();
+
+        TopupWalletRequest topupWalletRequest = TopupWalletRequest.builder()
+                .amount(request.getAmount())
+                .walletID(walletId)
+                .build();
+
+        return walletService.topupWallet(topupWalletRequest)
+                .flatMap(v -> transactionService.completeTransaction(initiatedTrx.getTransactionID()))
+                .map(completedTrx -> TopupResponse.builder()
+                        .userID(request.getUserID())
+                        .transactionID(completedTrx.getTransactionID())
+                        .amount(completedTrx.getAmount())
+                        .description(completedTrx.getDescription())
+                        .referenceID(completedTrx.getReferenceID())
+                        .build());
     }
 
     @Override

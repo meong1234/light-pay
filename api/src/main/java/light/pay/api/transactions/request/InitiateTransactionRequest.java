@@ -6,7 +6,7 @@ import lombok.Value;
 
 @Value
 @Builder
-public class CreateTransactionRequest {
+public class InitiateTransactionRequest {
     @SerializedName("transaction_id")
     private String transactionID;
 
