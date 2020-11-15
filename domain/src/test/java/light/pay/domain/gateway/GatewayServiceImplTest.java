@@ -7,9 +7,11 @@ import light.pay.api.accounts.response.AccountDTO;
 import light.pay.api.errors.Errors;
 import light.pay.api.errors.Response;
 import light.pay.api.gateway.GatewayService;
+import light.pay.api.gateway.request.PayRequest;
 import light.pay.api.gateway.request.RegisterCustomerRequest;
 import light.pay.api.gateway.request.RegisterMerchantRequest;
 import light.pay.api.gateway.request.TopupRequest;
+import light.pay.api.gateway.response.PayResponse;
 import light.pay.api.gateway.response.RegisterCustomerResponse;
 import light.pay.api.gateway.response.RegisterMerchantResponse;
 import light.pay.api.gateway.response.TopupResponse;
@@ -21,6 +23,7 @@ import light.pay.api.transactions.response.TransactionDTO;
 import light.pay.api.wallets.WalletService;
 import light.pay.api.wallets.request.CreateWalletRequest;
 import light.pay.api.wallets.request.TopupWalletRequest;
+import light.pay.api.wallets.request.TransferRequest;
 import light.pay.api.wallets.response.WalletDTO;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +48,8 @@ class GatewayServiceImplTest {
             .createErrorResponse(Errors.GENERIC_ERROR_CODE, "something", "");
     private static final Response USER_NOT_FOUND_ERROR = Response
             .createErrorResponse(Errors.USER_NOT_FOUND_ERROR_CODE, "user_id", "");
+    private static final Response USER_BALANCE_IS_NOT_ENOUGH_ERROR = Response
+            .createErrorResponse(Errors.USER_BALANCE_IS_NOT_ENOUGH_ERROR_CODE, "amount", "");
     private static final Response WALLET_NOT_FOUND_ERROR = Response
             .createErrorResponse(Errors.WALLET_NOT_FOUND_ERROR_CODE, "wallet_id", "");
     private static final Response TRANSACTION_ALREADY_EXISTS_ERROR = Response
@@ -234,7 +239,8 @@ class GatewayServiceImplTest {
             AccountDTO accountDTO = objectGenerator
                     .nextObject(AccountDTO.class)
                     .withUserID(request.getUserID())
-                    .withUserType(UserType.CUSTOMER);;
+                    .withUserType(UserType.CUSTOMER);
+            ;
             when(mockAccountService.findAccount(eq(request.getUserID()))).thenReturn(Response.createSuccessResponse(accountDTO));
 
             Response<TopupResponse> response = gatewayService.topup(request);
@@ -393,6 +399,345 @@ class GatewayServiceImplTest {
                     && argRequest.getDescription().equals(request.getDescription())
                     && argRequest.getReferenceID().equals(request.getReferenceID())
                     && argRequest.getTransactionType() == TransactionType.TOPUP;
+        }
+    }
+
+    @Nested
+    @DisplayName("GatewayService.CustomerPaid")
+    class CustomerPaid {
+        @BeforeEach
+        void setUp() {
+            when(mockAccountService.findAccount(any(String.class))).thenReturn(USER_NOT_FOUND_ERROR);
+            when(mockWalletService.findWalletByUserId(any(String.class))).thenReturn(WALLET_NOT_FOUND_ERROR);
+            when(mockTransactionService.initiateTransaction(any(InitiateTransactionRequest.class))).thenReturn(TRANSACTION_ALREADY_EXISTS_ERROR);
+        }
+
+        @Test
+        @DisplayName("should return user-not-found errors, if payrt-id not found in account-service")
+        void shouldReturnUserNotFoundErrors() {
+            PayRequest request = objectGenerator.nextObject(PayRequest.class);
+            Response<PayResponse> response = gatewayService.pay(request);
+
+            assertEquals(USER_NOT_FOUND_ERROR, response);
+
+            verify(mockAccountService, times(1)).findAccount(anyString());
+            verify(mockWalletService, times(0)).findWalletByUserId(anyString());
+            verify(mockTransactionService, times(0)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        @Test
+        @DisplayName("should return wallet-not-found errors, if customer wallet-id not found in wallet-service")
+        void shouldReturnWalletNotFoundErrors() {
+            PayRequest request = objectGenerator.nextObject(PayRequest.class);
+
+            AccountDTO accountDTO = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayerId())
+                    .withUserType(UserType.CUSTOMER);
+            when(mockAccountService.findAccount(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(accountDTO));
+
+            Response<PayResponse> response = gatewayService.pay(request);
+
+            assertEquals(WALLET_NOT_FOUND_ERROR, response);
+
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayerId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayerId()));
+            verify(mockTransactionService, times(0)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        @Test
+        @DisplayName("should return user-not-support errors, if payer is merchant")
+        void shouldReturnTransactionNotSupportErrors() {
+            PayRequest request = objectGenerator.nextObject(PayRequest.class);
+
+            AccountDTO accountDTO = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayerId())
+                    .withUserType(UserType.MERCHANT);
+            when(mockAccountService.findAccount(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(accountDTO));
+
+            Response<PayResponse> response = gatewayService.pay(request);
+
+            assertEquals(NOT_SUPPORTED_ERROR, response);
+
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayerId()));
+            verify(mockWalletService, times(0)).findWalletByUserId(eq(request.getPayerId()));
+            verify(mockTransactionService, times(0)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        @Test
+        @DisplayName("should return user-not-found errors, if merchant-id not found in account-service")
+        void shouldReturnUserMerchantNotFoundErrors() {
+            PayRequest request = objectGenerator.nextObject(PayRequest.class);
+
+            AccountDTO customerAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayerId())
+                    .withUserType(UserType.CUSTOMER);
+
+            when(mockAccountService.findAccount(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerAccount));
+
+            WalletDTO customerWallet = objectGenerator.nextObject(WalletDTO.class);
+            when(mockWalletService.findWalletByUserId(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerWallet));
+
+            when(mockAccountService.findAccount(eq(request.getPayeeId()))).thenReturn(USER_NOT_FOUND_ERROR);
+
+            Response<PayResponse> response = gatewayService.pay(request);
+
+            assertEquals(USER_NOT_FOUND_ERROR, response);
+
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayerId()));
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayeeId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayerId()));
+            verify(mockWalletService, times(0)).findWalletByUserId(eq(request.getPayeeId()));
+            verify(mockTransactionService, times(0)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        @Test
+        @DisplayName("should return excessive-balance errors, if customer balance not enough")
+        void shouldReturnExcessiveBalanceErrors() {
+            PayRequest request = objectGenerator.nextObject(PayRequest.class);
+
+            AccountDTO customerAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayerId())
+                    .withUserType(UserType.CUSTOMER);
+
+            when(mockAccountService.findAccount(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerAccount));
+
+            WalletDTO customerWallet = objectGenerator
+                    .nextObject(WalletDTO.class)
+                    .withBalance(request.getAmount() - 100);
+            when(mockWalletService.findWalletByUserId(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerWallet));
+
+            Response<PayResponse> response = gatewayService.pay(request);
+
+            assertEquals(USER_BALANCE_IS_NOT_ENOUGH_ERROR, response);
+
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayerId()));
+            verify(mockAccountService, times(0)).findAccount(eq(request.getPayeeId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayerId()));
+            verify(mockWalletService, times(0)).findWalletByUserId(eq(request.getPayeeId()));
+            verify(mockTransactionService, times(0)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        @Test
+        @DisplayName("should return user-not-support errors, if payee is customer")
+        void shouldReturnUserNotSupportIfPayeeIsCustomer() {
+            PayRequest request = objectGenerator.nextObject(PayRequest.class);
+
+            AccountDTO customerAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayerId())
+                    .withUserType(UserType.CUSTOMER);
+
+            when(mockAccountService.findAccount(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerAccount));
+
+            WalletDTO customerWallet = objectGenerator.nextObject(WalletDTO.class);
+            when(mockWalletService.findWalletByUserId(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerWallet));
+
+            AccountDTO merchantAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayeeId())
+                    .withUserType(UserType.CUSTOMER);
+
+            when(mockAccountService.findAccount(eq(request.getPayeeId()))).thenReturn(Response.createSuccessResponse(merchantAccount));
+
+            Response<PayResponse> response = gatewayService.pay(request);
+
+            assertEquals(NOT_SUPPORTED_ERROR, response);
+
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayerId()));
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayeeId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayerId()));
+            verify(mockWalletService, times(0)).findWalletByUserId(eq(request.getPayeeId()));
+            verify(mockTransactionService, times(0)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        @Test
+        @DisplayName("should return user-wallet-not-found errors, if merchant wallet-id not found in wallet-service")
+        void shouldReturnWalletNotFoundErrorsForMerchant() {
+            PayRequest request = objectGenerator.nextObject(PayRequest.class);
+
+            AccountDTO customerAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayerId())
+                    .withUserType(UserType.CUSTOMER);
+
+            when(mockAccountService.findAccount(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerAccount));
+
+            WalletDTO customerWallet = objectGenerator.nextObject(WalletDTO.class);
+            when(mockWalletService.findWalletByUserId(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerWallet));
+
+            AccountDTO merchantAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayeeId())
+                    .withUserType(UserType.MERCHANT);
+
+            when(mockAccountService.findAccount(eq(request.getPayeeId()))).thenReturn(Response.createSuccessResponse(merchantAccount));
+
+            Response<PayResponse> response = gatewayService.pay(request);
+
+            assertEquals(WALLET_NOT_FOUND_ERROR, response);
+
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayerId()));
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayeeId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayerId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayeeId()));
+            verify(mockTransactionService, times(0)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        @Test
+        @DisplayName("should return transaction-duplicate errors, if reference-id already exists in transaction-service")
+        void shouldReturnTransactionDuplicateErrors() {
+            PayRequest request = objectGenerator.nextObject(PayRequest.class);
+
+            AccountDTO customerAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayerId())
+                    .withUserType(UserType.CUSTOMER);
+
+            when(mockAccountService.findAccount(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerAccount));
+
+            WalletDTO customerWallet = objectGenerator.nextObject(WalletDTO.class);
+            when(mockWalletService.findWalletByUserId(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerWallet));
+
+            AccountDTO merchantAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayeeId())
+                    .withUserType(UserType.MERCHANT);
+
+            when(mockAccountService.findAccount(eq(request.getPayeeId()))).thenReturn(Response.createSuccessResponse(merchantAccount));
+
+            WalletDTO merchantWallet = objectGenerator.nextObject(WalletDTO.class);
+            when(mockWalletService.findWalletByUserId(eq(request.getPayeeId()))).thenReturn(Response.createSuccessResponse(merchantWallet));
+
+            Response<PayResponse> response = gatewayService.pay(request);
+
+            assertEquals(TRANSACTION_ALREADY_EXISTS_ERROR, response);
+
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayerId()));
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayeeId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayerId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayeeId()));
+            verify(mockTransactionService, times(1)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        @Test
+        @DisplayName("should return success, where customer balance is deducted, merchant balance increased, and pay transactions recorded")
+        void shouldSuccess() {
+            PayRequest request = objectGenerator.nextObject(PayRequest.class);
+
+            AccountDTO customerAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayerId())
+                    .withUserType(UserType.CUSTOMER);
+
+            when(mockAccountService.findAccount(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerAccount));
+
+            WalletDTO customerWallet = objectGenerator.nextObject(WalletDTO.class);
+            when(mockWalletService.findWalletByUserId(eq(request.getPayerId()))).thenReturn(Response.createSuccessResponse(customerWallet));
+
+            AccountDTO merchantAccount = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getPayeeId())
+                    .withUserType(UserType.MERCHANT);
+
+            when(mockAccountService.findAccount(eq(request.getPayeeId()))).thenReturn(Response.createSuccessResponse(merchantAccount));
+
+            WalletDTO merchantWallet = objectGenerator.nextObject(WalletDTO.class);
+            when(mockWalletService.findWalletByUserId(eq(request.getPayeeId()))).thenReturn(Response.createSuccessResponse(merchantWallet));
+
+            when(mockTransactionService.initiateTransaction(any(InitiateTransactionRequest.class)))
+                    .thenAnswer(initiateTransactionAnswer(request, customerWallet, merchantWallet));
+
+            TransferRequest transferRequest = TransferRequest.builder()
+                    .sourceID(customerWallet.getWalletId())
+                    .targetID(merchantWallet.getWalletId())
+                    .amount(request.getAmount())
+                    .build();
+
+            when(mockWalletService.transfer(eq(transferRequest)))
+                    .thenReturn(Response.createSuccessResponse(null));
+
+            when(mockTransactionService.completeTransaction(any(String.class)))
+                    .thenAnswer(completedTransactionAnswer(request, customerWallet, merchantWallet));
+
+            Response<PayResponse> response = gatewayService.pay(request);
+
+            ArgumentCaptor<InitiateTransactionRequest> createTransactionRequestArgumentCaptor = ArgumentCaptor.forClass(InitiateTransactionRequest.class);
+            verify(mockTransactionService, times(1)).initiateTransaction(createTransactionRequestArgumentCaptor.capture());
+            InitiateTransactionRequest value = createTransactionRequestArgumentCaptor.getValue();
+
+            PayResponse expectedResponse = PayResponse.builder()
+                    .payerId(request.getPayerId())
+                    .payeeId(request.getPayeeId())
+                    .transactionID(value.getTransactionID())
+                    .amount(request.getAmount())
+                    .description(request.getDescription())
+                    .referenceID(request.getReferenceID())
+                    .build();
+
+            assertEquals(expectedResponse, response.getData());
+
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayerId()));
+            verify(mockAccountService, times(1)).findAccount(eq(request.getPayeeId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayerId()));
+            verify(mockWalletService, times(1)).findWalletByUserId(eq(request.getPayeeId()));
+            verify(mockTransactionService, times(1)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        private Answer<Object> initiateTransactionAnswer(PayRequest request, WalletDTO customerWallet, WalletDTO merchantWallet) {
+            return (InvocationOnMock invocation) -> {
+                Object arg = invocation.getArguments()[0];
+                InitiateTransactionRequest argRequest = (InitiateTransactionRequest) arg;
+
+                if (!isValidPayRequest(argRequest, request, customerWallet.getWalletId(), merchantWallet.getWalletId())) {
+                    return GENERIC_ERROR;
+                }
+
+                TransactionDTO transactionDTO = getTransactionDTO(argRequest.getTransactionID(), request,
+                        customerWallet, merchantWallet, TransactionType.TOPUP, TransactionStatus.INITIATED);
+
+                return Response.createSuccessResponse(transactionDTO);
+            };
+        }
+
+        private Answer<Object> completedTransactionAnswer(PayRequest request, WalletDTO customerWallet, WalletDTO merchantWallet) {
+            return (InvocationOnMock invocation) -> {
+                String transactionId = (String) invocation.getArguments()[0];
+
+                TransactionDTO transactionDTO = getTransactionDTO(transactionId, request, customerWallet, merchantWallet,
+                        TransactionType.TOPUP, TransactionStatus.COMPLETED);
+
+                return Response.createSuccessResponse(transactionDTO);
+            };
+        }
+
+        private TransactionDTO getTransactionDTO(String transactionId, PayRequest request,
+                                                 WalletDTO customerWallet, WalletDTO merchantWallet,
+                                                 TransactionType transactionType, TransactionStatus transactionStatus) {
+            return TransactionDTO.builder()
+                    .transactionID(transactionId)
+                    .amount(request.getAmount())
+                    .creditedWallet(merchantWallet.getWalletId())
+                    .debitedWallet(customerWallet.getWalletId())
+                    .description(request.getDescription())
+                    .referenceID(request.getReferenceID())
+                    .transactionType(transactionType)
+                    .createdAt(OffsetDateTime.now())
+                    .status(transactionStatus)
+                    .build();
+        }
+
+        private boolean isValidPayRequest(InitiateTransactionRequest argRequest, PayRequest request,
+                                          String customer, String merchant) {
+            return argRequest.getAmount() == request.getAmount()
+                    && argRequest.getCreditedWallet().equals(merchant)
+                    && argRequest.getDebitedWallet().equals(customer)
+                    && argRequest.getDescription().equals(request.getDescription())
+                    && argRequest.getReferenceID().equals(request.getReferenceID())
+                    && argRequest.getTransactionType() == TransactionType.PAYMENT;
         }
     }
 }

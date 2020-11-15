@@ -22,6 +22,7 @@ import light.pay.api.transactions.response.TransactionDTO;
 import light.pay.api.wallets.WalletService;
 import light.pay.api.wallets.request.CreateWalletRequest;
 import light.pay.api.wallets.request.TopupWalletRequest;
+import light.pay.api.wallets.request.TransferRequest;
 import light.pay.api.wallets.response.WalletDTO;
 
 import java.util.Collections;
@@ -110,7 +111,59 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<PayResponse> pay(PayRequest request) {
-        return null;
+        Response<WalletDTO> payerWallet = findAccountAndWallet(request.getPayerId(), UserType.CUSTOMER);
+        if (!payerWallet.isSuccess()) {
+            return (Response) payerWallet;
+        }
+
+        WalletDTO payer = payerWallet.getData();
+
+        if (payer.getBalance() < request.getAmount()) {
+            return Response.createErrorResponse(Errors.USER_BALANCE_IS_NOT_ENOUGH_ERROR_CODE, "amount", "");
+        }
+
+        Response<WalletDTO> payeeWallet = findAccountAndWallet(request.getPayeeId(), UserType.MERCHANT);
+        if (!payeeWallet.isSuccess()) {
+            return (Response) payeeWallet;
+        }
+
+        String transactionsId = UUID.randomUUID().toString();
+        String payerWalletId = payer.getWalletId();
+        String payeeWalletId = payeeWallet.getData().getWalletId();
+
+        InitiateTransactionRequest initiateTransactionRequest = InitiateTransactionRequest.builder()
+                .transactionID(transactionsId)
+                .amount(request.getAmount())
+                .creditedWallet(payeeWalletId)
+                .debitedWallet(payerWalletId)
+                .description(request.getDescription())
+                .referenceID(request.getReferenceID())
+                .transactionType(TransactionType.PAYMENT)
+                .build();
+
+        Response<TransactionDTO> initiateTrxResponse = transactionService.initiateTransaction(initiateTransactionRequest);
+        if (!initiateTrxResponse.isSuccess()) {
+            return (Response) initiateTrxResponse;
+        }
+
+        TransactionDTO initiatedTrx = initiateTrxResponse.getData();
+
+        TransferRequest transferRequest = TransferRequest.builder()
+                .amount(request.getAmount())
+                .sourceID(payerWalletId)
+                .targetID(payeeWalletId)
+                .build();
+
+        return walletService.transfer(transferRequest)
+                .flatMap(v -> transactionService.completeTransaction(initiatedTrx.getTransactionID()))
+                .map(completedTrx -> PayResponse.builder()
+                        .payeeId(request.getPayeeId())
+                        .payerId(request.getPayerId())
+                        .transactionID(completedTrx.getTransactionID())
+                        .amount(completedTrx.getAmount())
+                        .description(completedTrx.getDescription())
+                        .referenceID(completedTrx.getReferenceID())
+                        .build());
     }
 
     private Response<String> registerAccount(String name, String email, String phoneNumber, UserType userType) {

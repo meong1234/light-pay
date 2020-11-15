@@ -10,5 +10,6 @@ import lombok.With;
 public class WalletDTO {
     @SerializedName("wallet_id")
     private String walletId;
+    @With
     private Long balance;
 }
