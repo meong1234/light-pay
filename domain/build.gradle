@@ -8,4 +8,5 @@ plugins {
 
 dependencies {
     api project(':api')
+    testImplementation('org.jeasy:easy-random-core:4.3.0')
 }
