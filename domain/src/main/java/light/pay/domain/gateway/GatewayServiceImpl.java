@@ -33,13 +33,43 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<RegisterCustomerResponse> registerCustomer(RegisterCustomerRequest request) {
+        return registerAccount(request.getName(), request.getEmail(), request.getPhoneNumber(), DomainConstants.Customer.CUSTOMER_TYPE)
+                .map(userId -> RegisterCustomerResponse.builder()
+                        .userID(userId)
+                        .name(request.getName())
+                        .email(request.getEmail())
+                        .phoneNumber(request.getPhoneNumber())
+                        .build());
+    }
+
+    @Override
+    public Response<RegisterMerchantResponse> registerMerchant(RegisterMerchantRequest request) {
+        return registerAccount(request.getName(), request.getEmail(), "", DomainConstants.Customer.MERCHANT_TYPE)
+                .map(userId -> RegisterMerchantResponse.builder()
+                        .merchantID(userId)
+                        .name(request.getName())
+                        .email(request.getEmail())
+                        .build());
+    }
+
+    @Override
+    public Response<TopupResponse> topup(TopupRequest request) {
+        return null;
+    }
+
+    @Override
+    public Response<PayResponse> pay(PayRequest request) {
+        return null;
+    }
+
+    private Response<String> registerAccount(String name, String email, String phoneNumber, int userType) {
         String userId = UUID.randomUUID().toString();
         CreateAccountRequest createAccountRequest = CreateAccountRequest.builder()
                 .userID(userId)
-                .name(request.getName())
-                .email(request.getEmail())
-                .phoneNumber(request.getPhoneNumber())
-                .userType(DomainConstants.Customer.CUSTOMER_TYPE)
+                .name(name)
+                .email(email)
+                .phoneNumber(phoneNumber)
+                .userType(userType)
                 .build();
 
         Response<String> accountResponse = accountService.createAccount(createAccountRequest);
@@ -58,27 +88,6 @@ public class GatewayServiceImpl implements GatewayService {
             return (Response) walletResponse;
         }
 
-        return walletResponse
-                .map(s -> RegisterCustomerResponse.builder()
-                        .userID(userId)
-                        .name(request.getName())
-                        .email(request.getEmail())
-                        .phoneNumber(request.getPhoneNumber())
-                        .build());
-    }
-
-    @Override
-    public Response<RegisterMerchantResponse> registerMerchant(RegisterMerchantRequest request) {
-        return null;
-    }
-
-    @Override
-    public Response<TopupResponse> topup(TopupRequest request) {
-        return null;
-    }
-
-    @Override
-    public Response<PayResponse> pay(PayRequest request) {
-        return null;
+        return Response.createSuccessResponse(userId);
     }
 }

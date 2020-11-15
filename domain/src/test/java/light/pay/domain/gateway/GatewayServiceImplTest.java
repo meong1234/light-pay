@@ -6,7 +6,9 @@ import light.pay.api.errors.Errors;
 import light.pay.api.errors.Response;
 import light.pay.api.gateway.GatewayService;
 import light.pay.api.gateway.request.RegisterCustomerRequest;
+import light.pay.api.gateway.request.RegisterMerchantRequest;
 import light.pay.api.gateway.response.RegisterCustomerResponse;
+import light.pay.api.gateway.response.RegisterMerchantResponse;
 import light.pay.api.transactions.TransactionService;
 import light.pay.api.wallets.WalletService;
 import light.pay.api.wallets.request.CreateWalletRequest;
@@ -80,7 +82,7 @@ class GatewayServiceImplTest {
         void shouldCreateCustomerAccountAndCreateNewWallet() {
             RegisterCustomerRequest request = objectGenerator.nextObject(RegisterCustomerRequest.class);
 
-            Mockito.when(mockAccountService.createAccount(argThat(isValidCreateAccountRequest(request, DomainConstants.Customer.CUSTOMER_TYPE))))
+            Mockito.when(mockAccountService.createAccount(argThat(isValidCreateAccountRequest(request))))
                     .thenReturn(Response.createSuccessResponse("successUserId"));
 
             Mockito.when(mockWalletService.createWallet(any(CreateWalletRequest.class)))
@@ -104,13 +106,79 @@ class GatewayServiceImplTest {
             assertEquals(expectedResponse, response.getData());
         }
 
-        private ArgumentMatcher<CreateAccountRequest> isValidCreateAccountRequest(RegisterCustomerRequest request, int userType) {
+        private ArgumentMatcher<CreateAccountRequest> isValidCreateAccountRequest(RegisterCustomerRequest request) {
             return createAccountRequest -> createAccountRequest.getEmail().equals(request.getEmail())
                     && createAccountRequest.getName().equals(request.getName())
                     && createAccountRequest.getPhoneNumber().equals(request.getPhoneNumber())
-                    && createAccountRequest.getUserType() == userType;
+                    && createAccountRequest.getUserType() == DomainConstants.Customer.CUSTOMER_TYPE;
+        }
+    }
+
+    @Nested
+    @DisplayName("GatewayService.RegisterMerchant")
+    class RegisterMerchantTest {
+
+        @Test
+        @DisplayName("should return createAccount errors, if accountService return errors")
+        void shouldReturnCreateAccountErrors() {
+            RegisterMerchantRequest request = objectGenerator.nextObject(RegisterMerchantRequest.class);
+            Response<RegisterMerchantResponse> response = gatewayService.registerMerchant(request);
+
+            assertEquals(GENERIC_ERROR, response);
+
+            verify(mockAccountService, times(1)).createAccount(any(CreateAccountRequest.class));
+            verify(mockWalletService, times(0)).createWallet(any(CreateWalletRequest.class));
         }
 
+        @Test
+        @DisplayName("should return createWallets errors, if walletservice return errors")
+        void shouldReturnCreateWalletsErrors() {
+            Mockito.when(mockAccountService.createAccount(any(CreateAccountRequest.class)))
+                    .thenReturn(Response.createSuccessResponse("successUserId"));
+
+            RegisterMerchantRequest request = objectGenerator.nextObject(RegisterMerchantRequest.class);
+            Response<RegisterMerchantResponse> response = gatewayService.registerMerchant(request);
+            assertEquals(GENERIC_ERROR, response);
+
+            verify(mockAccountService, times(1)).createAccount(any(CreateAccountRequest.class));
+            verify(mockWalletService, times(1)).createWallet(any(CreateWalletRequest.class));
+        }
+
+        @Test
+        @DisplayName("should return create new Merchant Account and Wallet")
+        void shouldCreateCustomerAccountAndCreateNewWallet() {
+            RegisterMerchantRequest request = objectGenerator.nextObject(RegisterMerchantRequest.class);
+
+            Mockito.when(mockAccountService.createAccount(argThat(isValidCreateAccountRequest(request))))
+                    .thenReturn(Response.createSuccessResponse("successUserId"));
+
+            Mockito.when(mockWalletService.createWallet(any(CreateWalletRequest.class)))
+                    .thenReturn(Response.createSuccessResponse("successWalletId"));
+
+            Response<RegisterMerchantResponse> response = gatewayService.registerMerchant(request);
+            assertTrue(response.isSuccess());
+
+            verify(mockAccountService, times(1)).createAccount(any(CreateAccountRequest.class));
+
+            ArgumentCaptor<CreateWalletRequest> createWalletRequestArgumentCaptor = ArgumentCaptor.forClass(CreateWalletRequest.class);
+            verify(mockWalletService, times(1)).createWallet(createWalletRequestArgumentCaptor.capture());
+            CreateWalletRequest value = createWalletRequestArgumentCaptor.getValue();
+
+            RegisterMerchantResponse expectedResponse = RegisterMerchantResponse.builder()
+                    .merchantID(value.getUserID())
+                    .name(request.getName())
+                    .email(request.getEmail())
+                    .build();
+            assertEquals(expectedResponse, response.getData());
+        }
+
+        private ArgumentMatcher<CreateAccountRequest> isValidCreateAccountRequest(RegisterMerchantRequest request) {
+            return createAccountRequest -> createAccountRequest.getEmail().equals(request.getEmail())
+                    && createAccountRequest.getName().equals(request.getName())
+                    && createAccountRequest.getUserType() == DomainConstants.Customer.MERCHANT_TYPE;
+        }
     }
+
+
 
 }
