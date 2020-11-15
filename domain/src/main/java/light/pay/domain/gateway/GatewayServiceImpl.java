@@ -3,7 +3,8 @@ package light.pay.domain.gateway;
 import light.pay.api.accounts.AccountService;
 import light.pay.api.accounts.UserType;
 import light.pay.api.accounts.request.CreateAccountRequest;
-import light.pay.api.accounts.response.AccountDTO;
+import light.pay.api.errors.Error;
+import light.pay.api.errors.Errors;
 import light.pay.api.errors.Response;
 import light.pay.api.gateway.GatewayService;
 import light.pay.api.gateway.request.PayRequest;
@@ -23,9 +24,16 @@ import light.pay.api.wallets.request.CreateWalletRequest;
 import light.pay.api.wallets.request.TopupWalletRequest;
 import light.pay.api.wallets.response.WalletDTO;
 
+import java.util.Collections;
 import java.util.UUID;
 
 public class GatewayServiceImpl implements GatewayService {
+
+    private static final Error NOT_SUPPORTED_ERROR = Error.builder()
+            .code(Errors.USER_NOT_SUPPORT_TRANSACTION_FLOW)
+            .entity("user_id")
+            .cause("")
+            .build();
 
     private AccountService accountService;
     private WalletService walletService;
@@ -60,14 +68,7 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<TopupResponse> topup(TopupRequest request) {
-
-        Response<AccountDTO> findAccountResponse = accountService.findAccount(request.getUserID());
-        if (!findAccountResponse.isSuccess()) {
-            return (Response) findAccountResponse;
-        }
-        AccountDTO account = findAccountResponse.getData();
-
-        Response<WalletDTO> walletByUserId = walletService.findWalletByUserId(account.getUserID());
+        Response<WalletDTO> walletByUserId = findAccountAndWallet(request.getUserID(), UserType.CUSTOMER);
         if (!walletByUserId.isSuccess()) {
             return (Response) walletByUserId;
         }
@@ -139,5 +140,12 @@ public class GatewayServiceImpl implements GatewayService {
         }
 
         return Response.createSuccessResponse(userId);
+    }
+
+    private Response<WalletDTO> findAccountAndWallet(String userId, UserType expectedType) {
+        return accountService
+                .findAccount(userId)
+                .validate(accountDto -> expectedType.equals(accountDto.getUserType()), Collections.singletonList(NOT_SUPPORTED_ERROR))
+                .flatMap(accountDTO -> walletService.findWalletByUserId(userId));
     }
 }

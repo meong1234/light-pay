@@ -16,6 +16,7 @@ public class AccountDTO {
     private String email;
     private String phoneNumber;
     private boolean active;
+    @With
     @SerializedName("user_type")
     private UserType userType;
 }

@@ -22,7 +22,6 @@ import light.pay.api.wallets.WalletService;
 import light.pay.api.wallets.request.CreateWalletRequest;
 import light.pay.api.wallets.request.TopupWalletRequest;
 import light.pay.api.wallets.response.WalletDTO;
-import light.pay.commons.marshalling.JsonUtils;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,6 +49,8 @@ class GatewayServiceImplTest {
             .createErrorResponse(Errors.WALLET_NOT_FOUND_ERROR_CODE, "wallet_id", "");
     private static final Response TRANSACTION_ALREADY_EXISTS_ERROR = Response
             .createErrorResponse(Errors.TRANSACTION_ALREADY_EXISTS_ERROR_CODE, "reference_id", "");
+    private static final Response NOT_SUPPORTED_ERROR = Response
+            .createErrorResponse(Errors.USER_NOT_SUPPORT_TRANSACTION_FLOW, "user_id", "");
 
     private GatewayService gatewayService;
     private AccountService mockAccountService;
@@ -201,7 +202,6 @@ class GatewayServiceImplTest {
         }
     }
 
-
     @Nested
     @DisplayName("GatewayService.CustomerTopup")
     class CustomerTopup {
@@ -233,7 +233,8 @@ class GatewayServiceImplTest {
 
             AccountDTO accountDTO = objectGenerator
                     .nextObject(AccountDTO.class)
-                    .withUserID(request.getUserID());
+                    .withUserID(request.getUserID())
+                    .withUserType(UserType.CUSTOMER);;
             when(mockAccountService.findAccount(eq(request.getUserID()))).thenReturn(Response.createSuccessResponse(accountDTO));
 
             Response<TopupResponse> response = gatewayService.topup(request);
@@ -246,13 +247,34 @@ class GatewayServiceImplTest {
         }
 
         @Test
+        @DisplayName("should return user-not-support errors, if topup for merchant")
+        void shouldReturnTransactionNotSupportErrors() {
+            TopupRequest request = objectGenerator.nextObject(TopupRequest.class);
+
+            AccountDTO accountDTO = objectGenerator
+                    .nextObject(AccountDTO.class)
+                    .withUserID(request.getUserID())
+                    .withUserType(UserType.MERCHANT);
+            when(mockAccountService.findAccount(eq(request.getUserID()))).thenReturn(Response.createSuccessResponse(accountDTO));
+
+            Response<TopupResponse> response = gatewayService.topup(request);
+
+            assertEquals(NOT_SUPPORTED_ERROR, response);
+
+            verify(mockAccountService, times(1)).findAccount(eq(request.getUserID()));
+            verify(mockWalletService, times(0)).findWalletByUserId(eq(request.getUserID()));
+            verify(mockTransactionService, times(0)).initiateTransaction(any(InitiateTransactionRequest.class));
+        }
+
+        @Test
         @DisplayName("should return transaction-duplicate errors, if reference-id already exists in transaction-service")
         void shouldReturnTransactionDuplicateErrors() {
             TopupRequest request = objectGenerator.nextObject(TopupRequest.class);
 
             AccountDTO accountDTO = objectGenerator
                     .nextObject(AccountDTO.class)
-                    .withUserID(request.getUserID());
+                    .withUserID(request.getUserID())
+                    .withUserType(UserType.CUSTOMER);
             when(mockAccountService.findAccount(eq(request.getUserID()))).thenReturn(Response.createSuccessResponse(accountDTO));
 
             WalletDTO walletDTO = objectGenerator.nextObject(WalletDTO.class);
@@ -275,7 +297,8 @@ class GatewayServiceImplTest {
 
             AccountDTO accountDTO = objectGenerator
                     .nextObject(AccountDTO.class)
-                    .withUserID(request.getUserID());
+                    .withUserID(request.getUserID())
+                    .withUserType(UserType.CUSTOMER);
             when(mockAccountService.findAccount(eq(request.getUserID()))).thenReturn(Response.createSuccessResponse(accountDTO));
 
             WalletDTO walletDTO = objectGenerator.nextObject(WalletDTO.class);
@@ -372,5 +395,4 @@ class GatewayServiceImplTest {
                     && argRequest.getTransactionType() == TransactionType.TOPUP;
         }
     }
-
 }
