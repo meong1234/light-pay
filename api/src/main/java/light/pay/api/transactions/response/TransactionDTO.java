@@ -1,6 +1,8 @@
 package light.pay.api.transactions.response;
 
 import com.google.gson.annotations.SerializedName;
+import light.pay.api.transactions.TransactionStatus;
+import light.pay.api.transactions.TransactionType;
 import lombok.Builder;
 import lombok.Value;
 
@@ -29,7 +31,7 @@ public class TransactionDTO {
     private OffsetDateTime createdAt;
 
     @SerializedName("transaction_type")
-    private int transactionType;
+    private TransactionType transactionType;
 
-    private int status;
+    private TransactionStatus status;
 }

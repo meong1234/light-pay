@@ -1,6 +1,7 @@
 package light.pay.domain.gateway;
 
 import light.pay.api.accounts.AccountService;
+import light.pay.api.accounts.UserType;
 import light.pay.api.accounts.request.CreateAccountRequest;
 import light.pay.api.accounts.response.AccountDTO;
 import light.pay.api.errors.Errors;
@@ -13,13 +14,15 @@ import light.pay.api.gateway.response.RegisterCustomerResponse;
 import light.pay.api.gateway.response.RegisterMerchantResponse;
 import light.pay.api.gateway.response.TopupResponse;
 import light.pay.api.transactions.TransactionService;
+import light.pay.api.transactions.TransactionStatus;
+import light.pay.api.transactions.TransactionType;
 import light.pay.api.transactions.request.InitiateTransactionRequest;
 import light.pay.api.transactions.response.TransactionDTO;
 import light.pay.api.wallets.WalletService;
 import light.pay.api.wallets.request.CreateWalletRequest;
 import light.pay.api.wallets.request.TopupWalletRequest;
 import light.pay.api.wallets.response.WalletDTO;
-import light.pay.domain.constants.DomainConstants;
+import light.pay.commons.marshalling.JsonUtils;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -129,7 +132,7 @@ class GatewayServiceImplTest {
             return createAccountRequest -> createAccountRequest.getEmail().equals(request.getEmail())
                     && createAccountRequest.getName().equals(request.getName())
                     && createAccountRequest.getPhoneNumber().equals(request.getPhoneNumber())
-                    && createAccountRequest.getUserType() == DomainConstants.Customer.CUSTOMER_TYPE;
+                    && createAccountRequest.getUserType() == UserType.CUSTOMER;
         }
     }
 
@@ -194,7 +197,7 @@ class GatewayServiceImplTest {
         private ArgumentMatcher<CreateAccountRequest> isValidCreateAccountRequest(RegisterMerchantRequest request) {
             return createAccountRequest -> createAccountRequest.getEmail().equals(request.getEmail())
                     && createAccountRequest.getName().equals(request.getName())
-                    && createAccountRequest.getUserType() == DomainConstants.Customer.MERCHANT_TYPE;
+                    && createAccountRequest.getUserType() == UserType.MERCHANT;
         }
     }
 
@@ -328,7 +331,7 @@ class GatewayServiceImplTest {
                 }
 
                 TransactionDTO transactionDTO = getTransactionDTO(argRequest.getTransactionID(), request, walletDTO,
-                        DomainConstants.TransactionType.TOPUP_TYPE, DomainConstants.TransactionStatus.INITIATED);
+                        TransactionType.TOPUP, TransactionStatus.INITIATED);
 
                 return Response.createSuccessResponse(transactionDTO);
             };
@@ -339,13 +342,14 @@ class GatewayServiceImplTest {
                 String transactionId = (String) invocation.getArguments()[0];
 
                 TransactionDTO transactionDTO = getTransactionDTO(transactionId, request, walletDTO,
-                        DomainConstants.TransactionType.TOPUP_TYPE, DomainConstants.TransactionStatus.COMPLETED);
+                        TransactionType.TOPUP, TransactionStatus.COMPLETED);
 
                 return Response.createSuccessResponse(transactionDTO);
             };
         }
 
-        private TransactionDTO getTransactionDTO(String transactionId, TopupRequest request, WalletDTO walletDTO, int transactionType, int transactionStatus) {
+        private TransactionDTO getTransactionDTO(String transactionId, TopupRequest request, WalletDTO walletDTO,
+                                                 TransactionType transactionType, TransactionStatus transactionStatus) {
             return TransactionDTO.builder()
                     .transactionID(transactionId)
                     .amount(request.getAmount())
@@ -365,7 +369,7 @@ class GatewayServiceImplTest {
                     && argRequest.getDebitedWallet().equals("")
                     && argRequest.getDescription().equals(request.getDescription())
                     && argRequest.getReferenceID().equals(request.getReferenceID())
-                    && argRequest.getTransactionType() == DomainConstants.TransactionType.TOPUP_TYPE;
+                    && argRequest.getTransactionType() == TransactionType.TOPUP;
         }
     }
 

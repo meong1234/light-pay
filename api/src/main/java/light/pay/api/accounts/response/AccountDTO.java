@@ -1,6 +1,7 @@
 package light.pay.api.accounts.response;
 
 import com.google.gson.annotations.SerializedName;
+import light.pay.api.accounts.UserType;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
@@ -16,5 +17,5 @@ public class AccountDTO {
     private String phoneNumber;
     private boolean active;
     @SerializedName("user_type")
-    private int userType;
+    private UserType userType;
 }

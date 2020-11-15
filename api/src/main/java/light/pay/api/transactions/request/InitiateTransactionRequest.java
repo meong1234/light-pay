@@ -1,6 +1,8 @@
 package light.pay.api.transactions.request;
 
 import com.google.gson.annotations.SerializedName;
+import light.pay.api.accounts.UserType;
+import light.pay.api.transactions.TransactionType;
 import lombok.Builder;
 import lombok.Value;
 
@@ -24,5 +26,5 @@ public class InitiateTransactionRequest {
     private Long amount;
 
     @SerializedName("transaction_type")
-    private int transactionType;
+    private TransactionType transactionType;
 }

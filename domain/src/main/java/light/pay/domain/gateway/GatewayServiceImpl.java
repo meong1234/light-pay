@@ -1,6 +1,7 @@
 package light.pay.domain.gateway;
 
 import light.pay.api.accounts.AccountService;
+import light.pay.api.accounts.UserType;
 import light.pay.api.accounts.request.CreateAccountRequest;
 import light.pay.api.accounts.response.AccountDTO;
 import light.pay.api.errors.Response;
@@ -14,13 +15,13 @@ import light.pay.api.gateway.response.RegisterCustomerResponse;
 import light.pay.api.gateway.response.RegisterMerchantResponse;
 import light.pay.api.gateway.response.TopupResponse;
 import light.pay.api.transactions.TransactionService;
+import light.pay.api.transactions.TransactionType;
 import light.pay.api.transactions.request.InitiateTransactionRequest;
 import light.pay.api.transactions.response.TransactionDTO;
 import light.pay.api.wallets.WalletService;
 import light.pay.api.wallets.request.CreateWalletRequest;
 import light.pay.api.wallets.request.TopupWalletRequest;
 import light.pay.api.wallets.response.WalletDTO;
-import light.pay.domain.constants.DomainConstants;
 
 import java.util.UUID;
 
@@ -38,7 +39,7 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<RegisterCustomerResponse> registerCustomer(RegisterCustomerRequest request) {
-        return registerAccount(request.getName(), request.getEmail(), request.getPhoneNumber(), DomainConstants.Customer.CUSTOMER_TYPE)
+        return registerAccount(request.getName(), request.getEmail(), request.getPhoneNumber(), UserType.CUSTOMER)
                 .map(userId -> RegisterCustomerResponse.builder()
                         .userID(userId)
                         .name(request.getName())
@@ -49,7 +50,7 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<RegisterMerchantResponse> registerMerchant(RegisterMerchantRequest request) {
-        return registerAccount(request.getName(), request.getEmail(), "", DomainConstants.Customer.MERCHANT_TYPE)
+        return registerAccount(request.getName(), request.getEmail(), "", UserType.MERCHANT)
                 .map(userId -> RegisterMerchantResponse.builder()
                         .merchantID(userId)
                         .name(request.getName())
@@ -81,7 +82,7 @@ public class GatewayServiceImpl implements GatewayService {
                 .debitedWallet("") //this should be bank wallet
                 .description(request.getDescription())
                 .referenceID(request.getReferenceID())
-                .transactionType(DomainConstants.TransactionType.TOPUP_TYPE)
+                .transactionType(TransactionType.TOPUP)
                 .build();
 
         Response<TransactionDTO> initiateTrxResponse = transactionService.initiateTransaction(initiateTransactionRequest);
@@ -111,7 +112,7 @@ public class GatewayServiceImpl implements GatewayService {
         return null;
     }
 
-    private Response<String> registerAccount(String name, String email, String phoneNumber, int userType) {
+    private Response<String> registerAccount(String name, String email, String phoneNumber, UserType userType) {
         String userId = UUID.randomUUID().toString();
         CreateAccountRequest createAccountRequest = CreateAccountRequest.builder()
                 .userID(userId)
