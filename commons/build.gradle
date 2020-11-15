@@ -5,3 +5,7 @@
 plugins {
     id 'light.pay.java-library-conventions'
 }
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.6.2'
+}
