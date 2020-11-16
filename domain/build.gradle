@@ -4,9 +4,34 @@
 
 plugins {
     id 'light.pay.java-library-conventions'
+    id "org.flywaydb.flyway" version "5.2.4"
 }
+
+flyway {
+    task migrateDb(type: org.flywaydb.gradle.task.FlywayMigrateTask) {
+        url = 'jdbc:postgresql://localhost:5432/light_pay_dev'
+        user = 'postgres'
+        password = 'foo'
+    }
+
+    task migrateTestDb(type: org.flywaydb.gradle.task.FlywayMigrateTask) {
+        url = 'jdbc:postgresql://localhost:5431/light_pay_test'
+        user = 'postgres'
+        password = 'foo'
+    }
+}
+
 
 dependencies {
     api project(':api')
+
+    implementation('com.gojek:jfigaro:1.2.4')
+
+    implementation('org.jdbi:jdbi:2.71')
+    compile('org.postgresql:postgresql:42.2.5')
+    implementation('org.flywaydb:flyway-core:4.2.0')
+
+    implementation 'org.slf4j:slf4j-api:1.7.13'
+
     testImplementation('org.jeasy:easy-random-core:4.3.0')
 }

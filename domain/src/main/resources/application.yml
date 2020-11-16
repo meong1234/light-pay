@@ -1,0 +1,11 @@
+DB_HOST: localhost
+DB_PORT: 5431
+DB_NAME: light_pay_test
+DB_USERNAME: postgres
+DB_PASSWORD: foo
+DB_SOFTWARE: postgresql
+DB_DRIVER_CLASS: org.postgresql.Driver
+DB_POOL_SIZE: 50
+
+JDBI_LOG_LEVEL: DEBUG
+LOG_LEVEL: INFO

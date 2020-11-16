@@ -1,0 +1,18 @@
+version: '2'
+services:
+  postgres_dev:
+    image: postgres:10.0-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=light_pay_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=foo
+  postgres_test:
+    image: postgres:10.0-alpine
+    ports:
+      - "5431:5432"
+    environment:
+      - POSTGRES_DB=light_pay_test
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=foo
