@@ -7,4 +7,5 @@ public class Errors {
     public static String USER_BALANCE_IS_NOT_ENOUGH_ERROR_CODE = "403";
     public static String TRANSACTION_ALREADY_EXISTS_ERROR_CODE = "501";
     public static String USER_NOT_SUPPORT_TRANSACTION_FLOW = "502";
+    public static String TRANSACTION_NOT_EXISTS_ERROR_CODE = "503";
 }
