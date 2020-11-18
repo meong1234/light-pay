@@ -45,7 +45,7 @@ class GatewayHandlerTest {
         RegisterCustomerResponse registerCustomerResponse = objectGenerator
                 .nextObject(RegisterCustomerResponse.class);
 
-        light.pay.api.errors.Response<RegisterCustomerResponse> successResponse = light.pay.api.errors.Response
+        light.pay.api.response.Response<RegisterCustomerResponse> successResponse = light.pay.api.response.Response
                 .createSuccessResponse(registerCustomerResponse);
 
         String body = JsonUtils.toJson(registerCustomerRequest);
@@ -53,7 +53,7 @@ class GatewayHandlerTest {
         when(mockGatewayService.registerCustomer(eq(registerCustomerRequest)))
                 .thenReturn(successResponse);
 
-        light.pay.api.errors.Response<RegisterCustomerResponse> registerCustomerResponseResponse = gatewayHandler
+        light.pay.api.response.Response<RegisterCustomerResponse> registerCustomerResponseResponse = gatewayHandler
                 .registerCustomer(mockRequest, mockResponse);
 
         assertEquals(successResponse, registerCustomerResponseResponse);
@@ -70,7 +70,7 @@ class GatewayHandlerTest {
         RegisterMerchantResponse registerMerchantResponse = objectGenerator
                 .nextObject(RegisterMerchantResponse.class);
 
-        light.pay.api.errors.Response<RegisterMerchantResponse> successResponse = light.pay.api.errors.Response
+        light.pay.api.response.Response<RegisterMerchantResponse> successResponse = light.pay.api.response.Response
                 .createSuccessResponse(registerMerchantResponse);
 
         String body = JsonUtils.toJson(registerMerchantRequest);
@@ -78,7 +78,7 @@ class GatewayHandlerTest {
         when(mockGatewayService.registerMerchant(eq(registerMerchantRequest)))
                 .thenReturn(successResponse);
 
-        light.pay.api.errors.Response<RegisterMerchantResponse> registerCustomerResponseResponse = gatewayHandler
+        light.pay.api.response.Response<RegisterMerchantResponse> registerCustomerResponseResponse = gatewayHandler
                 .registerMerchant(mockRequest, mockResponse);
 
         assertEquals(successResponse, registerCustomerResponseResponse);
@@ -95,7 +95,7 @@ class GatewayHandlerTest {
         TopupResponse expectedResponse = objectGenerator
                 .nextObject(TopupResponse.class);
 
-        light.pay.api.errors.Response<TopupResponse> successResponse = light.pay.api.errors.Response
+        light.pay.api.response.Response<TopupResponse> successResponse = light.pay.api.response.Response
                 .createSuccessResponse(expectedResponse);
 
         String body = JsonUtils.toJson(request);
@@ -103,7 +103,7 @@ class GatewayHandlerTest {
         when(mockGatewayService.topup(eq(request)))
                 .thenReturn(successResponse);
 
-        light.pay.api.errors.Response<TopupResponse> gatewayResponse = gatewayHandler
+        light.pay.api.response.Response<TopupResponse> gatewayResponse = gatewayHandler
                 .topup(mockRequest, mockResponse);
 
         assertEquals(successResponse, gatewayResponse);
@@ -120,7 +120,7 @@ class GatewayHandlerTest {
         PayResponse expectedResponse = objectGenerator
                 .nextObject(PayResponse.class);
 
-        light.pay.api.errors.Response<PayResponse> successResponse = light.pay.api.errors.Response
+        light.pay.api.response.Response<PayResponse> successResponse = light.pay.api.response.Response
                 .createSuccessResponse(expectedResponse);
 
         String body = JsonUtils.toJson(request);
@@ -128,7 +128,7 @@ class GatewayHandlerTest {
         when(mockGatewayService.pay(eq(request)))
                 .thenReturn(successResponse);
 
-        light.pay.api.errors.Response<PayResponse> gatewayResponse = gatewayHandler
+        light.pay.api.response.Response<PayResponse> gatewayResponse = gatewayHandler
                 .pay(mockRequest, mockResponse);
 
         assertEquals(successResponse, gatewayResponse);

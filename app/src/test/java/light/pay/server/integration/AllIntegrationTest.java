@@ -85,7 +85,7 @@ public class AllIntegrationTest {
     void shouldRegisterCustomer() throws IOException {
         RegisterCustomerRequest request = objectGenerator.nextObject(RegisterCustomerRequest.class);
 
-        Type responseType = new TypeToken<light.pay.api.errors.Response<RegisterCustomerResponse>>() {}.getType();
+        Type responseType = new TypeToken<light.pay.api.response.Response<RegisterCustomerResponse>>() {}.getType();
 
         RegisterCustomerResponse data = verifyAPI("/v1/customer", request, responseType);
 
@@ -97,13 +97,13 @@ public class AllIntegrationTest {
 
         assertThat(data).isEqualToIgnoringGivenFields(expectedResponse, "userID");
 
-        light.pay.api.errors.Response<Wallet> walletResponse = walletRepository.getByUserId(data.getUserID());
+        light.pay.api.response.Response<Wallet> walletResponse = walletRepository.getByUserId(data.getUserID());
 
         assertTrue(walletResponse.isSuccess());
         assertEquals(data.getUserID(), walletResponse.getData().getUserID());
         assertEquals(0, walletResponse.getData().getBalance());
 
-        light.pay.api.errors.Response<Account> accountResponse = accountRepository.getByUserId(data.getUserID());
+        light.pay.api.response.Response<Account> accountResponse = accountRepository.getByUserId(data.getUserID());
         assertTrue(accountResponse.isSuccess());
 
         Account accountResponseData = accountResponse.getData();
@@ -119,7 +119,7 @@ public class AllIntegrationTest {
     void shouldRegisterMerchant() throws IOException {
         RegisterMerchantRequest request = objectGenerator.nextObject(RegisterMerchantRequest.class);
 
-        Type responseType = new TypeToken<light.pay.api.errors.Response<RegisterMerchantResponse>>() {}.getType();
+        Type responseType = new TypeToken<light.pay.api.response.Response<RegisterMerchantResponse>>() {}.getType();
 
         RegisterMerchantResponse data = verifyAPI("/v1/merchant", request, responseType);
 
@@ -130,13 +130,13 @@ public class AllIntegrationTest {
 
         assertThat(data).isEqualToIgnoringGivenFields(expectedResponse, "merchantID");
 
-        light.pay.api.errors.Response<Wallet> walletResponse = walletRepository.getByUserId(data.getMerchantID());
+        light.pay.api.response.Response<Wallet> walletResponse = walletRepository.getByUserId(data.getMerchantID());
 
         assertTrue(walletResponse.isSuccess());
         assertEquals(data.getMerchantID(), walletResponse.getData().getUserID());
         assertEquals(0, walletResponse.getData().getBalance());
 
-        light.pay.api.errors.Response<Account> accountResponse = accountRepository.getByUserId(data.getMerchantID());
+        light.pay.api.response.Response<Account> accountResponse = accountRepository.getByUserId(data.getMerchantID());
         assertTrue(accountResponse.isSuccess());
 
         Account accountResponseData = accountResponse.getData();
@@ -150,7 +150,7 @@ public class AllIntegrationTest {
     @Test
     void shouldTopup() throws IOException {
         RegisterCustomerRequest request = objectGenerator.nextObject(RegisterCustomerRequest.class);
-        Type responseType = new TypeToken<light.pay.api.errors.Response<RegisterCustomerResponse>>() {}.getType();
+        Type responseType = new TypeToken<light.pay.api.response.Response<RegisterCustomerResponse>>() {}.getType();
         RegisterCustomerResponse customerData = verifyAPI("/v1/customer", request, responseType);
 
         TopupRequest topupRequest = TopupRequest.builder()
@@ -159,7 +159,7 @@ public class AllIntegrationTest {
                 .userID(customerData.getUserID())
                 .description("from-bank")
                 .build();
-        Type topupResponseType = new TypeToken<light.pay.api.errors.Response<TopupResponse>>() {}.getType();
+        Type topupResponseType = new TypeToken<light.pay.api.response.Response<TopupResponse>>() {}.getType();
         TopupResponse data = verifyAPI("/v1/topup", topupRequest, topupResponseType);
 
         TopupResponse expectedResponse = TopupResponse.builder()
@@ -171,12 +171,12 @@ public class AllIntegrationTest {
 
         assertThat(data).isEqualToIgnoringGivenFields(expectedResponse, "transactionID");
 
-        light.pay.api.errors.Response<Wallet> walletResponse = walletRepository.getByUserId(data.getUserID());
+        light.pay.api.response.Response<Wallet> walletResponse = walletRepository.getByUserId(data.getUserID());
         assertTrue(walletResponse.isSuccess());
         assertEquals(customerData.getUserID(), walletResponse.getData().getUserID());
         assertEquals(topupRequest.getAmount(), walletResponse.getData().getBalance());
 
-        light.pay.api.errors.Response<Transaction> transactionResponse = transactionRepository.getByTransactionID(data.getTransactionID());
+        light.pay.api.response.Response<Transaction> transactionResponse = transactionRepository.getByTransactionID(data.getTransactionID());
         Transaction transaction = transactionResponse.getData();
         assertEquals(topupRequest.getReferenceID(), transaction.getReferenceID());
         assertEquals(walletResponse.getData().getWalletID(), transaction.getCreditedWallet());
@@ -190,7 +190,7 @@ public class AllIntegrationTest {
     @Test
     void shouldPay() throws IOException {
         RegisterCustomerRequest request = objectGenerator.nextObject(RegisterCustomerRequest.class);
-        Type responseType = new TypeToken<light.pay.api.errors.Response<RegisterCustomerResponse>>() {}.getType();
+        Type responseType = new TypeToken<light.pay.api.response.Response<RegisterCustomerResponse>>() {}.getType();
         RegisterCustomerResponse customerData = verifyAPI("/v1/customer", request, responseType);
 
         TopupRequest topupRequest = TopupRequest.builder()
@@ -199,11 +199,11 @@ public class AllIntegrationTest {
                 .userID(customerData.getUserID())
                 .description("from-bank")
                 .build();
-        Type topupResponseType = new TypeToken<light.pay.api.errors.Response<TopupResponse>>() {}.getType();
+        Type topupResponseType = new TypeToken<light.pay.api.response.Response<TopupResponse>>() {}.getType();
         verifyAPI("/v1/topup", topupRequest, topupResponseType);
 
         RegisterMerchantRequest registerMerchantRequest = objectGenerator.nextObject(RegisterMerchantRequest.class);
-        Type merchantResponseType = new TypeToken<light.pay.api.errors.Response<RegisterMerchantResponse>>() {}.getType();
+        Type merchantResponseType = new TypeToken<light.pay.api.response.Response<RegisterMerchantResponse>>() {}.getType();
         RegisterMerchantResponse merchantData = verifyAPI("/v1/merchant", registerMerchantRequest, merchantResponseType);
 
 
@@ -214,7 +214,7 @@ public class AllIntegrationTest {
                 .amount(100L)
                 .description("some-payment")
                 .build();
-        Type payResponseType = new TypeToken<light.pay.api.errors.Response<PayResponse>>() {}.getType();
+        Type payResponseType = new TypeToken<light.pay.api.response.Response<PayResponse>>() {}.getType();
         PayResponse payData = verifyAPI("/v1/pay", payRequest, payResponseType);
 
         PayResponse expectedResponse = PayResponse.builder()
@@ -227,17 +227,17 @@ public class AllIntegrationTest {
 
         assertThat(payData).isEqualToIgnoringGivenFields(expectedResponse, "transactionID");
 
-        light.pay.api.errors.Response<Wallet> payerWalletResponse = walletRepository.getByUserId(payRequest.getPayerId());
+        light.pay.api.response.Response<Wallet> payerWalletResponse = walletRepository.getByUserId(payRequest.getPayerId());
         assertTrue(payerWalletResponse.isSuccess());
         assertEquals(customerData.getUserID(), payerWalletResponse.getData().getUserID());
         assertEquals(0L, payerWalletResponse.getData().getBalance());
 
-        light.pay.api.errors.Response<Wallet> payeeWalletResponse = walletRepository.getByUserId(payRequest.getPayeeId());
+        light.pay.api.response.Response<Wallet> payeeWalletResponse = walletRepository.getByUserId(payRequest.getPayeeId());
         assertTrue(payeeWalletResponse.isSuccess());
         assertEquals(merchantData.getMerchantID(), payeeWalletResponse.getData().getUserID());
         assertEquals(100L, payeeWalletResponse.getData().getBalance());
 
-        light.pay.api.errors.Response<Transaction> transactionResponse = transactionRepository.getByTransactionID(payData.getTransactionID());
+        light.pay.api.response.Response<Transaction> transactionResponse = transactionRepository.getByTransactionID(payData.getTransactionID());
         Transaction transaction = transactionResponse.getData();
         assertEquals(payRequest.getReferenceID(), transaction.getReferenceID());
         assertEquals(payeeWalletResponse.getData().getWalletID(), transaction.getCreditedWallet());
@@ -252,7 +252,7 @@ public class AllIntegrationTest {
         ClientResponse clientResponse = postAPI(path, body);
         assertEquals(200, clientResponse.code);
 
-        light.pay.api.errors.Response<T> responseBody = JsonUtils.fromJson(clientResponse.body, typeOfT);
+        light.pay.api.response.Response<T> responseBody = JsonUtils.fromJson(clientResponse.body, typeOfT);
         assertTrue(responseBody.isSuccess());
         return responseBody.getData();
     }

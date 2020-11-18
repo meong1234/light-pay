@@ -1,6 +1,6 @@
 package light.pay.domain.wallets;
 
-import light.pay.api.errors.Response;
+import light.pay.api.response.Response;
 import light.pay.domain.wallets.entity.Wallet;
 
 public interface WalletRepository {

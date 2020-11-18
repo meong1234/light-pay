@@ -3,7 +3,7 @@ package light.pay.server;
 import com.gojek.ApplicationConfiguration;
 import com.gojek.Figaro;
 import light.pay.api.errors.Errors;
-import light.pay.api.errors.Response;
+import light.pay.api.response.Response;
 import light.pay.api.gateway.GatewayService;
 import light.pay.commons.marshalling.JsonUtils;
 import light.pay.server.handler.GatewayHandler;

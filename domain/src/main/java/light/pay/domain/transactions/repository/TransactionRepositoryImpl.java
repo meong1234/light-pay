@@ -2,7 +2,7 @@ package light.pay.domain.transactions.repository;
 
 import light.pay.api.errors.Error;
 import light.pay.api.errors.Errors;
-import light.pay.api.errors.Response;
+import light.pay.api.response.Response;
 import light.pay.commons.db.Repository;
 import light.pay.domain.transactions.TransactionRepository;
 import light.pay.domain.transactions.entity.Transaction;

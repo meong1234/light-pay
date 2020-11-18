@@ -1,5 +1,6 @@
-package light.pay.api.errors;
+package light.pay.api.response;
 
+import light.pay.api.errors.Error;
 import lombok.Value;
 
 import java.util.Collections;

@@ -3,7 +3,7 @@ package light.pay.commons.db;
 import com.gojek.ApplicationConfiguration;
 import com.gojek.Figaro;
 import light.pay.api.errors.Errors;
-import light.pay.api.errors.Response;
+import light.pay.api.response.Response;
 import org.postgresql.ds.PGPoolingDataSource;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.logging.SLF4JLog;

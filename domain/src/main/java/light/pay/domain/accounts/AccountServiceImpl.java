@@ -3,7 +3,7 @@ package light.pay.domain.accounts;
 import light.pay.api.accounts.AccountService;
 import light.pay.api.accounts.request.CreateAccountRequest;
 import light.pay.api.accounts.response.AccountDTO;
-import light.pay.api.errors.Response;
+import light.pay.api.response.Response;
 import light.pay.domain.accounts.entity.Account;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

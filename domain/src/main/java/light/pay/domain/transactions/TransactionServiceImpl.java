@@ -1,7 +1,7 @@
 package light.pay.domain.transactions;
 
 import light.pay.api.errors.Errors;
-import light.pay.api.errors.Response;
+import light.pay.api.response.Response;
 import light.pay.api.transactions.TransactionService;
 import light.pay.api.transactions.TransactionStatus;
 import light.pay.api.transactions.request.InitiateTransactionRequest;

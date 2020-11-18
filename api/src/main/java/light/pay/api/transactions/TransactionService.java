@@ -1,6 +1,6 @@
 package light.pay.api.transactions;
 
-import light.pay.api.errors.Response;
+import light.pay.api.response.Response;
 import light.pay.api.transactions.request.InitiateTransactionRequest;
 import light.pay.api.transactions.response.TransactionDTO;
 

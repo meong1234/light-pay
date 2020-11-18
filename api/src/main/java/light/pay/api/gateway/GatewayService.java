@@ -1,6 +1,6 @@
 package light.pay.api.gateway;
 
-import light.pay.api.errors.Response;
+import light.pay.api.response.Response;
 import light.pay.api.gateway.request.PayRequest;
 import light.pay.api.gateway.request.RegisterCustomerRequest;
 import light.pay.api.gateway.request.RegisterMerchantRequest;

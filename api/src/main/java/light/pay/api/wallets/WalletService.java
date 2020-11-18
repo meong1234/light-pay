@@ -1,6 +1,6 @@
 package light.pay.api.wallets;
 
-import light.pay.api.errors.Response;
+import light.pay.api.response.Response;
 import light.pay.api.wallets.request.CreateWalletRequest;
 import light.pay.api.wallets.request.TopupWalletRequest;
 import light.pay.api.wallets.request.TransferRequest;
