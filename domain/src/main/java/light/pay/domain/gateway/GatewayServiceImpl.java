@@ -24,11 +24,16 @@ import light.pay.api.wallets.request.CreateWalletRequest;
 import light.pay.api.wallets.request.TopupWalletRequest;
 import light.pay.api.wallets.request.TransferRequest;
 import light.pay.api.wallets.response.WalletDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.UUID;
 
+import static net.logstash.logback.marker.Markers.append;
+
 public class GatewayServiceImpl implements GatewayService {
+    private static final Logger logger = LoggerFactory.getLogger(GatewayServiceImpl.class);
 
     private static final Error NOT_SUPPORTED_ERROR = Error.builder()
             .code(Errors.USER_NOT_SUPPORT_TRANSACTION_FLOW)
@@ -48,6 +53,7 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<RegisterCustomerResponse> registerCustomer(RegisterCustomerRequest request) {
+        logger.info(append("request", request.toString()), "receiving registerCustomer");
         return registerAccount(request.getName(), request.getEmail(), request.getPhoneNumber(), UserType.CUSTOMER)
                 .map(userId -> RegisterCustomerResponse.builder()
                         .userID(userId)
@@ -59,6 +65,7 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<RegisterMerchantResponse> registerMerchant(RegisterMerchantRequest request) {
+        logger.info(append("request", request.toString()), "receiving registerMerchant");
         return registerAccount(request.getName(), request.getEmail(), "", UserType.MERCHANT)
                 .map(userId -> RegisterMerchantResponse.builder()
                         .merchantID(userId)
@@ -69,8 +76,10 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<TopupResponse> topup(TopupRequest request) {
+        logger.info(append("request", request.toString()), "receiving topup");
         Response<WalletDTO> walletByUserId = findAccountAndWallet(request.getUserID(), UserType.CUSTOMER);
         if (!walletByUserId.isSuccess()) {
+            logger.warn(append("errors", walletByUserId.getErrors().toString()), "errors findAccount");
             return (Response) walletByUserId;
         }
 
@@ -87,8 +96,11 @@ public class GatewayServiceImpl implements GatewayService {
                 .transactionType(TransactionType.TOPUP)
                 .build();
 
+        logger.debug(append("wallet_id", walletId), "initiating topup transactions");
+
         Response<TransactionDTO> initiateTrxResponse = transactionService.initiateTransaction(initiateTransactionRequest);
         if (!initiateTrxResponse.isSuccess()) {
+            logger.warn(append("errors", initiateTrxResponse.getErrors().toString()), "errors initiateTrx");
             return (Response) initiateTrxResponse;
         }
         TransactionDTO initiatedTrx = initiateTrxResponse.getData();
@@ -97,6 +109,8 @@ public class GatewayServiceImpl implements GatewayService {
                 .amount(request.getAmount())
                 .walletID(walletId)
                 .build();
+
+        logger.debug(append("wallet_id", walletId), "increasing balance of wallet");
 
         return walletService.topupWallet(topupWalletRequest)
                 .flatMap(v -> transactionService.completeTransaction(initiatedTrx.getTransactionID()))
@@ -111,8 +125,10 @@ public class GatewayServiceImpl implements GatewayService {
 
     @Override
     public Response<PayResponse> pay(PayRequest request) {
+        logger.info(append("request", request.toString()), "receiving pay");
         Response<WalletDTO> payerWallet = findAccountAndWallet(request.getPayerId(), UserType.CUSTOMER);
         if (!payerWallet.isSuccess()) {
+            logger.warn(append("errors", payerWallet.getErrors().toString()), "errors find Payer Account");
             return (Response) payerWallet;
         }
 
@@ -124,6 +140,7 @@ public class GatewayServiceImpl implements GatewayService {
 
         Response<WalletDTO> payeeWallet = findAccountAndWallet(request.getPayeeId(), UserType.MERCHANT);
         if (!payeeWallet.isSuccess()) {
+            logger.warn(append("errors", payeeWallet.getErrors().toString()), "errors find payee Account");
             return (Response) payeeWallet;
         }
 
@@ -141,8 +158,12 @@ public class GatewayServiceImpl implements GatewayService {
                 .transactionType(TransactionType.PAYMENT)
                 .build();
 
+        logger.debug(append("payer_wallet_id", payerWalletId)
+                .and(append("payee_wallet_id", payeeWalletId)), "initiating pay transactions");
+
         Response<TransactionDTO> initiateTrxResponse = transactionService.initiateTransaction(initiateTransactionRequest);
         if (!initiateTrxResponse.isSuccess()) {
+            logger.warn(append("errors", initiateTrxResponse.getErrors().toString()), "errors initiateTrx");
             return (Response) initiateTrxResponse;
         }
 
@@ -153,6 +174,9 @@ public class GatewayServiceImpl implements GatewayService {
                 .sourceID(payerWalletId)
                 .targetID(payeeWalletId)
                 .build();
+
+        logger.debug(append("payer_wallet_id", payerWalletId)
+                .and(append("payee_wallet_id", payeeWalletId)), "transferring amount");
 
         return walletService.transfer(transferRequest)
                 .flatMap(v -> transactionService.completeTransaction(initiatedTrx.getTransactionID()))
@@ -178,6 +202,7 @@ public class GatewayServiceImpl implements GatewayService {
 
         Response<String> accountResponse = accountService.createAccount(createAccountRequest);
         if (!accountResponse.isSuccess()) {
+            logger.warn(append("errors", accountResponse.getErrors().toString()), "errors createAccount");
             return (Response) accountResponse;
         }
 
@@ -189,6 +214,7 @@ public class GatewayServiceImpl implements GatewayService {
 
         Response<String> walletResponse = walletService.createWallet(createWalletRequest);
         if (!walletResponse.isSuccess()) {
+            logger.warn(append("errors", walletResponse.getErrors().toString()), "errors createWallet");
             return (Response) walletResponse;
         }
 

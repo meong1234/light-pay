@@ -23,7 +23,7 @@ public class WalletRepositoryImpl extends Repository<WalletDbInterface> implemen
 
     @Override
     public Response<Wallet> getByWalletId(String walletId) {
-        return execute(WalletDbInterface.class, repo -> repo.getByUserId(walletId))
+        return execute(WalletDbInterface.class, repo -> repo.getByWalletID(walletId))
                 .validate(this::isExists, Collections.singletonList(new Error( "wallet_id",  Errors.WALLET_NOT_FOUND_ERROR_CODE,"")));
     }
 

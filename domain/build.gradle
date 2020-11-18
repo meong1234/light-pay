@@ -32,6 +32,5 @@ dependencies {
     implementation('org.flywaydb:flyway-core:4.2.0')
 
     implementation 'org.slf4j:slf4j-api:1.7.13'
-
-    testImplementation('org.jeasy:easy-random-core:4.3.0')
+    implementation 'net.logstash.logback:logstash-logback-encoder:5.2'
 }

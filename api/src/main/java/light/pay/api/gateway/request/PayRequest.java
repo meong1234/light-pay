@@ -7,10 +7,10 @@ import lombok.Value;
 @Value
 @Builder
 public class PayRequest {
-    @SerializedName("payerId")
+    @SerializedName("payer_id")
     private String payerId;
 
-    @SerializedName("payeeId")
+    @SerializedName("payee_id")
     private String payeeId;
 
     private Long amount;

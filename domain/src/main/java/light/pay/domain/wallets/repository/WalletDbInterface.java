@@ -13,7 +13,7 @@ public interface WalletDbInterface {
     @SqlQuery("SELECT id, wallet_id, user_id, balance FROM wallets WHERE user_id = :user_id")
     Wallet getByUserId(@Bind("user_id") String userID);
 
-    @SqlQuery("SELECT id, wallet_id, user_id, balance FROM wallets WHERE wallet_id = :walletId")
+    @SqlQuery("SELECT id, wallet_id, user_id, balance FROM wallets WHERE wallet_id = :wallet_id")
     Wallet getByWalletID(@Bind("wallet_id") String walletId);
 
     @SqlUpdate("UPDATE wallets SET balance = :newBalance where wallet_id = :wallet_id")

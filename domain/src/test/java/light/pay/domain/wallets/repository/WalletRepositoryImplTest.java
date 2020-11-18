@@ -46,6 +46,28 @@ class WalletRepositoryImplTest {
     }
 
     @Test
+    void insertShouldExistsInDBUsingGetByWalletId() {
+        String userID = UUID.randomUUID().toString();
+        String walletId = UUID.randomUUID().toString();
+        Wallet wallet = Wallet.builder()
+                .walletID(walletId)
+                .userID(userID)
+                .balance(0L)
+                .build();
+
+        walletRepository.insert(wallet);
+
+        Response<Wallet> response = walletRepository.getByWalletId(walletId);
+        assertTrue(response.isSuccess());
+
+        Wallet actual = response.getData();
+
+        assertEquals(wallet.getUserID(), actual.getUserID());
+        assertEquals(wallet.getWalletID(), actual.getWalletID());
+        assertEquals(wallet.getBalance(), actual.getBalance());
+    }
+
+    @Test
     void shouldUpdateBalanceSuccessfullyInDb() {
         String userID = UUID.randomUUID().toString();
         String walletId = UUID.randomUUID().toString();
