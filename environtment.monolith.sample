@@ -1,0 +1,14 @@
+export APP_ENVIRONMENT=staging
+export DB_HOST='localhost'
+export DB_PORT='5432'
+export DB_NAME='light_pay_dev'
+export DB_USERNAME='postgres'
+export DB_PASSWORD='foo'
+export DB_SOFTWARE='postgresql'
+export DB_DRIVER_CLASS='org.postgresql.Driver'
+export DB_POOL_SIZE='50'
+
+export JDBI_LOG_LEVEL='DEBUG'
+export LOG_LEVEL='INFO'
+
+export PORT='8080'

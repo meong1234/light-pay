@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonNull;
 
+import java.lang.reflect.Type;
 import java.time.OffsetDateTime;
 
 public class JsonUtils {
@@ -14,6 +15,10 @@ public class JsonUtils {
 
     public static <T> T fromJson(String json, Class<T> classOfT) {
         return gson.fromJson(json, classOfT);
+    }
+
+    public static <T> T fromJson(String json, Type typeOfT) {
+        return gson.fromJson(json, typeOfT);
     }
 
     public static String toJson(Object src) {

@@ -1,0 +1,130 @@
+{
+	"info": {
+		"name": "light-pay",
+		"_postman_id": "86ddce96-8cac-b270-05bf-44c6bd63df40",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "http://localhost:8080/v1/customer",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"light-2\",\n\t\"email\": \"email\",\n\t\"phoneNumber\": \"phonenumber\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/customer",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"customer"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/v1/merchant",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"light-merchant\",\n\t\"email\": \"email\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/merchant",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"merchant"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/v1/topup",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"user_id\": \"0fadec3b-c0ba-4bfb-9be8-1af007d70534\",\n\t\"amount\": \"100\",\n\t\"reference_id\": \"BANK-ACB-NOTES-001\",\n\t\"description\": \"FROM BANK ACB\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/topup",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"topup"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/v1/pay",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"payer_id\": \"0fadec3b-c0ba-4bfb-9be8-1af007d70534\",\n\t\"payee_id\": \"760c79ee-4d52-4679-87a6-9fff5fb2fb77\",\n\t\"amount\": \"300\",\n\t\"reference_id\": \"Kopi-Bukan-Kenangan-01\",\n\t\"description\": \"Bukan Kenangan Mantan\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/pay",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"pay"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}

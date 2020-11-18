@@ -27,7 +27,7 @@ dependencies {
 
     implementation('com.gojek:jfigaro:1.2.4')
 
-    implementation('org.jdbi:jdbi:2.71')
+    compile('org.jdbi:jdbi:2.71')
     compile('org.postgresql:postgresql:42.2.5')
     implementation('org.flywaydb:flyway-core:4.2.0')
 
