@@ -1,0 +1,405 @@
+swagger: '2.0'
+info:
+  description: This is a light-pay API
+  version: 1.0.0
+  title: Simple E-Wallet API
+  # put the contact info for your development or API team
+  contact:
+    email: you@light-pay.com
+
+
+# tags are used for organizing operations
+tags:
+  - name: customer
+    description: Customer only calls
+  - name: owner
+    description: Operations available to owner only
+
+paths:
+  /v1/customer:
+    post:
+      tags:
+        - customer
+      summary: register new customer
+      operationId: registerCustomer
+      description: Adds an customer to the system
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: registerCustomerRequest
+          description: Customer Details
+          schema:
+            $ref: '#/definitions/registerCustomerRequest'
+      responses:
+        200:
+          description: customer created
+          schema:
+            $ref: '#/definitions/registerCustomerSuccessResponse'
+        400:
+          description: bad request
+          schema:
+            $ref: '#/definitions/errorResponse'
+  /v1/merchant:
+    post:
+      tags:
+        - owner
+      summary: register new merchant
+      operationId: registerMerchant
+      description: Adds an merchant to the system
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: registerMerchantRequest
+          description: Merchant Details
+          schema:
+            $ref: '#/definitions/registerMerchantRequest'
+      responses:
+        200:
+          description: merchant created
+          schema:
+            $ref: '#/definitions/registerMerchantSuccessResponse'
+        400:
+          description: bad request
+          schema:
+            $ref: '#/definitions/errorResponse'
+  /v1/topup:
+    post:
+      tags:
+        - customer
+      summary: topup user
+      operationId: topup
+      description: Adds an balance to the user
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: topupRequest
+          description: topup Details
+          schema:
+            $ref: '#/definitions/topupRequest'
+      responses:
+        200:
+          description: topup transaction created
+          schema:
+            $ref: '#/definitions/topupSuccessResponse'
+        400:
+          description: bad request
+          schema:
+            $ref: '#/definitions/errorResponse'
+  /v1/pay:
+    post:
+      tags:
+        - customer
+      summary: pay from user to merchant
+      operationId: pay
+      description: pay merchant for xx money
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: payRequest
+          description: pay Details
+          schema:
+            $ref: '#/definitions/payRequest'
+      responses:
+        200:
+          description: pay transaction created
+          schema:
+            $ref: '#/definitions/paySuccessResponse'
+        400:
+          description: bad request
+          schema:
+            $ref: '#/definitions/errorResponse'
+definitions:
+  registerCustomerRequest:
+    type: object
+    required:
+      - name
+      - email
+      - phoneNumber
+    properties:
+      name:
+        type: string
+        example: customer-1
+      email:
+        type: string
+        example: customer@gmail.com
+      phoneNumber:
+        type: string
+        example: 0811811811
+  registerCustomerSuccessResponse:
+    type: object
+    required:
+      - success
+      - data
+      - errors
+    properties:
+      success:
+        type: boolean
+        example: true
+      data:
+        $ref: '#/definitions/registerCustomerResponse'
+      errors:
+        type: "array"
+        items:
+          type: object
+  registerCustomerResponse:
+    type: object
+    required:
+      - user_id
+      - name
+      - email
+      - phoneNumber
+    properties:
+      user_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      name:
+        type: string
+        example: customer-1
+      email:
+        type: string
+        example: customer@gmail.com
+      phoneNumber:
+        type: string
+        example: 0811811811
+  registerMerchantRequest:
+    type: object
+    required:
+      - name
+      - email
+    properties:
+      name:
+        type: string
+        example: merchant-1
+      email:
+        type: string
+        example: merchant@gmail.com
+  registerMerchantSuccessResponse:
+    type: object
+    required:
+      - success
+      - data
+      - errors
+    properties:
+      success:
+        type: boolean
+        example: true
+      data:
+        $ref: '#/definitions/registerMerchantResponse'
+      errors:
+        type: "array"
+        items:
+          type: object
+  registerMerchantResponse:
+    type: object
+    required:
+      - merchant_id
+      - name
+      - email
+    properties:
+      merchant_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      name:
+        type: string
+        example: merchant-1
+      email:
+        type: string
+        example: merchant@gmail.com
+      phoneNumber:
+        type: string
+        example: 0811811811
+  topupRequest:
+    type: object
+    required:
+      - user_id
+      - amount
+      - reference_id
+      - description
+    properties:
+      user_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      amount:
+        type: integer
+        example: 100
+      reference_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      description:
+        type: string
+        format: uuid
+        example: topup from BANK XXX
+  topupSuccessResponse:
+    type: object
+    required:
+      - success
+      - data
+      - errors
+    properties:
+      success:
+        type: boolean
+        example: true
+      data:
+        $ref: '#/definitions/topupResponse'
+      errors:
+        type: "array"
+        items:
+          type: object
+  topupResponse:
+    type: object
+    required:
+      - transaction_id
+      - user_id
+      - amount
+      - reference_id
+      - description
+    properties:
+      transaction_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      user_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      amount:
+        type: integer
+        example: 100
+      reference_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      description:
+        type: string
+        format: uuid
+        example: topup from BANK XXX
+  payRequest:
+    type: object
+    required:
+      - payer_id
+      - payee_id
+      - amount
+      - reference_id
+      - description
+    properties:
+      payer_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      payee_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      amount:
+        type: integer
+        example: 100
+      reference_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      description:
+        type: string
+        format: uuid
+        example: pay for XXX
+  paySuccessResponse:
+    type: object
+    required:
+      - success
+      - data
+      - errors
+    properties:
+      success:
+        type: boolean
+        example: true
+      data:
+        $ref: '#/definitions/topupResponse'
+      errors:
+        type: "array"
+        items:
+          type: object
+  payResponse:
+    type: object
+    required:
+      - transaction_id
+      - payer_id
+      - payee_id
+      - amount
+      - reference_id
+      - description
+    properties:
+      transaction_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      payer_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      payee_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      amount:
+        type: integer
+        example: 100
+      reference_id:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      description:
+        type: string
+        format: uuid
+        example: topup from BANK XXX
+  errorResponse:
+    type: object
+    required:
+      - success
+      - data
+      - errors
+    properties:
+      success:
+        type: boolean
+        example: false
+      data:
+        type: object
+      errors:
+        type: "array"
+        items:
+          $ref: "#/definitions/error"
+  error:
+    type: object
+    required:
+      - code
+      - entity
+      - cause
+    properties:
+      code:
+        type: string
+        example: 900
+      entity:
+        type: string
+        example: user_id
+      cause:
+        type: string
+        example: user not found
+# Added by API Auto Mocking Plugin
+host: virtserver.swaggerhub.com
+basePath: /l8939/Light-Pay/1.0.0
+schemes:
+  - https
