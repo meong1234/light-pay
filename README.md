@@ -16,6 +16,7 @@ The project itself has 4 modules
 this tutorial 
 1. [problem statement](tutorial/problem_statement.md)
 2. [references](tutorial/reference.md)  
+2. [sequence_diagram](tutorial/sequence_diagram.md)  
 ## How to use
 
 ### Dependencies
