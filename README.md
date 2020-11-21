@@ -1,5 +1,4 @@
  # LightPay
- 
 LightPay is a fintech apps, use for sharing how to build a apps in java
 
 The project itself has 4 modules
@@ -11,7 +10,20 @@ The project itself has 4 modules
    - the bussiness logic for all services goes here
  - apps
    - an entry point of our monolithic app, including all handlers
-  
+   
+ 
+## Tools
+* Java
+* Gradle
+* Postgres
+* Docker
+
+## Java Dependency
+* Junit 5
+* Spark (http server) [link](http://sparkjava.com/)
+* GSON (Json Marshaller) [link](https://github.com/google/gson)
+* jdbi (idiomatic access to relational data ) [link](https://jdbi.org/)
+
 ## Tutorial
 this tutorial 
 1. [problem statement](tutorial/problem_statement.md)
